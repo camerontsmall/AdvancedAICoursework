@@ -8,10 +8,17 @@ import java.util.ArrayList;
  */
 public class PerceptronNode {
 
+    static int PerceptronIdCounter = 0;
+
+    public PerceptronNode(){
+        this.id = PerceptronIdCounter;
+        PerceptronIdCounter++;
+    }
+
     private ArrayList<NodeWeighting> inputs = new ArrayList<NodeWeighting>();
     private Double bias = 0.0;
 
-    public int id;
+    private int id;
 
     public Double getValue(){
         Double outputValue = 0.0;

@@ -1,9 +1,15 @@
 package com.camerontsmall.advancedai;
 
+import java.util.ArrayList;
+
 public class Main {
 
     public static void main(String[] args) {
 	// write your code here
+
+        ArrayList<PerceptronNode> inputs = new ArrayList<PerceptronNode>();
+        ArrayList<PerceptronNode> neurons = new ArrayList<PerceptronNode>();
+        PerceptronNode output = new OutputNode();
 
         PerceptronNode node1 = new PerceptronNode();
 
