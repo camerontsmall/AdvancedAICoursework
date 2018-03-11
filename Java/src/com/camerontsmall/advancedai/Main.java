@@ -1,5 +1,6 @@
 package com.camerontsmall.advancedai;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class Main {
@@ -20,17 +21,31 @@ public class Main {
 
         //backprop.export("export.csv");
 
-        for(int i = 4; i < 10; i++){
 
-            backprop.setNumHiddenNodes(i);
-            backprop.setupNodes();
+        ArrayList<Integer> epochRuns = new ArrayList<Integer>();
+        epochRuns.add(50);
+        epochRuns.add(100);
+        epochRuns.add(200);
+        epochRuns.add(500);
+        epochRuns.add(700);
+        epochRuns.add(1000);
 
-            backprop.run();
-            Double mse = backprop.getMSE();
+        for(Integer numEpochs : epochRuns){
+            for(int i = 4; i < 10; i++){
 
-            backprop.export("export_" + i + "nodes_" + mse +  "mse.csv");
+                backprop.setNumHiddenNodes(i);
+                backprop.setEpochs(numEpochs);
+                backprop.setupNodes();
 
+                backprop.run();
+                Double mse = backprop.getMSE();
+
+                backprop.export("export/export_" + i + "nodes_" + numEpochs + "_epochs" + mse +  "mse.csv");
+
+            }
         }
+
+
 
 
     }
