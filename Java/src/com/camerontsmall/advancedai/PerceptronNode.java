@@ -1,5 +1,6 @@
 package com.camerontsmall.advancedai;
 
+import java.lang.reflect.Array;
 import java.util.Set;
 import java.util.ArrayList;
 
@@ -8,17 +9,47 @@ import java.util.ArrayList;
  */
 public class PerceptronNode {
 
-    static int PerceptronIdCounter = 0;
+    private static int PerceptronIdCounter = 0;
+    private static ArrayList<PerceptronNode> ExistingNodes = new ArrayList<PerceptronNode>();
+    public static ArrayList<PerceptronNode> FindOuputs(PerceptronNode targetNode){
+        ArrayList<PerceptronNode> outputs = new ArrayList<PerceptronNode>();
+
+        for(PerceptronNode node : ExistingNodes){
+
+            for(NodeWeighting input : node.getInputs()){
+                if(input.node.getId() == targetNode.getId()){
+                    outputs.add(input.node);
+                }
+            }
+        }
+
+        return outputs;
+    }
+    public static PerceptronNode getById(Integer id){
+        for(PerceptronNode node: ExistingNodes){
+            if(node.getId() == id) return node;
+        }
+        return null;
+    }
 
     public PerceptronNode(){
         this.id = PerceptronIdCounter;
         PerceptronIdCounter++;
+        ExistingNodes.add(this);
     }
 
     private ArrayList<NodeWeighting> inputs = new ArrayList<NodeWeighting>();
     private Double bias = 0.0;
 
-    private int id;
+    private Integer id;
+
+    public Integer getId(){
+        return this.id;
+    }
+
+    public String getTitle(){
+        return  "Node " + this.id.toString();
+    }
 
     public Double getValue(){
         Double outputValue = 0.0;
@@ -30,6 +61,10 @@ public class PerceptronNode {
 
         outputValue += this.bias;
         return outputValue;
+    }
+
+    public ArrayList<NodeWeighting> getInputs(){
+        return this.inputs;
     }
 
     public void setWeight(int inputId, Double weight){
@@ -50,6 +85,17 @@ public class PerceptronNode {
             if(input.node == checkNode) return true;
         }
         return false;
+    }
+
+    public String getEquation(){
+        String equation = "";
+        for(NodeWeighting input : this.inputs){
+            if(equation.length() > 0) equation = equation + " + ";
+            equation = equation + "(" + input.node.getEquation() + " * " + input.weight.toString() + ")";
+        }
+        if(equation.length() > 0) equation = equation + " + ";
+        equation = equation + this.bias.toString();
+        return "(" + equation + ")";
     }
 
 }

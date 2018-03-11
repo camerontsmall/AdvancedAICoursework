@@ -9,8 +9,22 @@ public class InputNode extends PerceptronNode{
 
     private ArrayList<Double> values = new ArrayList<Double>();
     private int pointer = 0;
+    private String title = "";
 
-    public void updatePointer(int pointerValue){
+    public InputNode(String title){
+        super();
+        this.title = title;
+    }
+
+    public String getTitle(){
+        return this.title;
+    }
+
+    public String getEquation(){
+        return this.title;
+    }
+
+    public void setPointer(int pointerValue){
         this.pointer = pointerValue;
     }
 
