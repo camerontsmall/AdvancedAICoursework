@@ -14,7 +14,7 @@ public class Main {
 
         Backpropagation backprop = new Backpropagation();
 
-        backprop.runOnce();
+        backprop.run();
 
         /*
         ArrayList<PerceptronNode> inputs = new ArrayList<PerceptronNode>();

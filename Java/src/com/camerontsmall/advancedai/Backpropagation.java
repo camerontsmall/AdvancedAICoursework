@@ -10,7 +10,7 @@ public class Backpropagation {
 
     /* Config */
     private Double step = 0.1;
-    private Integer epochs = 50;
+    private Integer epochs = 100;
     private Integer hiddenNodes = 2;
 
     /* Variables */
@@ -62,16 +62,41 @@ public class Backpropagation {
 
     }
 
-    public void runOnce(){
+    public void step(){
+
+        
+
+    }
+
+    public void run(){
+
+        System.out.println("Starting values:");
         System.out.println(this.output.getEquation());
-        System.out.println("Error: " + this.output.getError());
+        System.out.println("Initial MSE: " + calculateMSE());
+
+        for(int i = 0; i < epochs; i++){
+            for(int j = 0; j < data.getSize(); j++){
+                updatePointers(j);
+                step();
+            }
+        }
+
+        System.out.println("Results after " + epochs + " epochs:");
+        System.out.println(this.output.getEquation());
+        System.out.println("Final MSE: " + calculateMSE());
+
     }
 
-    public void runThrough(){
-
-
-
+    public double calculateMSE(){
+        Double mse = 0.0;
+        for(int j = 0; j < data.getSize(); j++){
+            updatePointers(j);
+            mse += Math.pow(output.getError(), 2);
+        }
+        mse = mse / data.getSize();
+        return mse;
     }
+
 
     /**
      * Set pointer values for all nodes containing data
@@ -94,5 +119,13 @@ public class Backpropagation {
         Double normal = rand.nextDouble();
 
         return (normal * (upper - lower) - lower);
+    }
+
+    public static Double sigmoid(Double sum){
+        return 1 / (1 + Math.exp(-sum));
+    }
+
+    public static Double sigmoidPrime(Double sum){
+        return sigmoid(sum) * (1 - sigmoid(sum));
     }
 }

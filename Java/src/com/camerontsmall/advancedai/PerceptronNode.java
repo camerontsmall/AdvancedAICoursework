@@ -11,6 +11,7 @@ public class PerceptronNode {
 
     private static int PerceptronIdCounter = 0;
     private static ArrayList<PerceptronNode> ExistingNodes = new ArrayList<PerceptronNode>();
+
     public static ArrayList<PerceptronNode> FindOuputs(PerceptronNode targetNode){
         ArrayList<PerceptronNode> outputs = new ArrayList<PerceptronNode>();
 
@@ -40,6 +41,7 @@ public class PerceptronNode {
 
     private ArrayList<NodeWeighting> inputs = new ArrayList<NodeWeighting>();
     private Double bias = 0.0;
+    private Double lastSum = 0.0;
 
     private Integer id;
 
@@ -51,6 +53,10 @@ public class PerceptronNode {
         return  "Node " + this.id.toString();
     }
 
+    public double getLastSum(){
+        return lastSum;
+    }
+
     public Double getValue(){
         Double outputValue = 0.0;
 
@@ -60,6 +66,7 @@ public class PerceptronNode {
         }
 
         outputValue += this.bias;
+        lastSum = outputValue;
         return outputValue;
     }
 
