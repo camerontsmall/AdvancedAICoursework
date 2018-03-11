@@ -8,6 +8,7 @@ import java.util.ArrayList;
 public class OutputNode extends PerceptronNode {
 
     private ArrayList<Double> values = new ArrayList<Double>();
+
     private int pointer = 0;
     private String title = "";
 

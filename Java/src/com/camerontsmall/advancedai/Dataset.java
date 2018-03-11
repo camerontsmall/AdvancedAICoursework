@@ -3,11 +3,9 @@ package com.camerontsmall.advancedai;
 import jdk.internal.util.xml.impl.Input;
 
 import javax.xml.crypto.Data;
+import java.io.*;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.nio.Buffer;
 
 //we could just write the data straight to the nodes, but this adds a bit of flexibility
@@ -19,6 +17,10 @@ class DataColumn{
 
     public String title;
     public ArrayList<Double> values = new ArrayList<Double>();
+    public ArrayList<Double> computedValues = new ArrayList<Double>();
+
+    double multiplier = 1.0;
+    double offset = 0.0;
 
     public void addValue(Double value){
         values.add(value);
@@ -28,6 +30,8 @@ class DataColumn{
         InputNode node = new InputNode(this.title);
 
         for(Double value : this.values){
+            value = value * multiplier;
+            value = value + offset;
             node.addDataPoint(value);
         }
 
@@ -38,13 +42,66 @@ class DataColumn{
         OutputNode node = new OutputNode(this.title);
 
         for(Double value : this.values){
+            value = value * multiplier;
+            value = value + offset;
             node.addDataPoint(value);
         }
 
         return node;
     }
 
+    public void importComputedValues(ArrayList<Double> values){
 
+        computedValues.clear();
+        for(Double readValue : values) {
+            readValue = readValue - offset;
+            readValue = readValue / multiplier;
+            computedValues.add(readValue);
+        }
+
+    }
+
+    public double calculateMSE(){
+
+        Double mse = 0.0;
+        for(int j = 0; j < values.size(); j++) {
+                Double observed = values.get(j);
+                Double computed = computedValues.get(j);
+                Double error = observed - computed;
+                mse += Math.pow(error, 2);
+        }
+        mse = mse / values.size();
+        return mse;
+    }
+
+    public double getMax(){
+        double max = 0.0;
+        for(double value : values){
+            if(value > max) max = value;
+        }
+        return max;
+    }
+
+    public double getMin(){
+        double min = 0.0;
+        for(double value : values){
+            if(value < min) min = value;
+        }
+        return min;
+    }
+
+    public void normalise(double min, double max){
+
+        double currentMin = getMin();
+        double currentMax = getMax();
+
+        double currentRange = currentMax - currentMin;
+        double targetRange = max - min;
+
+        multiplier = targetRange / currentRange;
+        offset = currentMin - min;
+
+    }
 }
 
 /**
@@ -90,6 +147,19 @@ public class Dataset {
 
     public OutputNode getOutputNode(){
         return this.outputColumn.makeOutputNode();
+    }
+
+    public void importComputedValues(ArrayList<Double> normalValues){
+        outputColumn.importComputedValues(normalValues);
+    }
+
+    public void report(){
+        Double mse = outputColumn.calculateMSE();
+        System.out.println("MSE: " + mse);
+    }
+
+    public double getMSE(){
+        return outputColumn.calculateMSE();
     }
 
     public boolean importCSV(String filePath){
@@ -164,6 +234,43 @@ public class Dataset {
 
     }
 
-    public void exportCSV(String filepath){}
+    public void normalise(Double min, Double max){
+
+        for(DataColumn column : columns) {
+            column.normalise(min, max);
+        }
+
+    }
+
+    public void exportCSV(String filepath){
+
+        try{
+
+            PrintWriter pw = new PrintWriter( new File(filepath) );
+            StringBuilder sb = new StringBuilder();
+
+            sb.append("observed");
+            sb.append(',');
+            sb.append("computed");
+            sb.append('\n');
+
+            for(int i = 0; i < outputColumn.values.size(); i++){
+                double observed = outputColumn.values.get(i);
+                double computed = outputColumn.computedValues.get(i);
+                sb.append(observed);
+                sb.append(',');
+                sb.append(computed);
+                sb.append('\n');
+            }
+
+            pw.write(sb.toString());
+            pw.close();
+            System.out.println("Wrote results to " + filepath);
+
+        }catch(FileNotFoundException e){
+            e.printStackTrace();
+        }
+
+    }
 
 }
