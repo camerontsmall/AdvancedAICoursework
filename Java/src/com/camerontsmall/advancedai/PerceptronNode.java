@@ -78,6 +78,9 @@ public class PerceptronNode {
         this.inputs.get(inputId).weight = weight;
     }
 
+    public Double getBias(){
+         return this.bias;
+    }
     public void setBias(Double bias){
         this.bias = bias;
     }

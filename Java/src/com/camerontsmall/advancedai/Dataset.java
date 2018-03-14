@@ -162,6 +162,10 @@ public class Dataset {
         return outputColumn.calculateMSE();
     }
 
+    public double getRMS(){
+        return Math.sqrt(outputColumn.calculateMSE());
+    }
+
     public boolean importCSV(String filePath){
 
         if(filePath == null) return false;

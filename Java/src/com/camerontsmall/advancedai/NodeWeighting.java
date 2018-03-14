@@ -12,4 +12,5 @@ public class NodeWeighting {
 
     public PerceptronNode node;
     public Double weight;
+    public Double lastWeightChange = 0.0;
 }

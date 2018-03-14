@@ -1,7 +1,36 @@
 package com.camerontsmall.advancedai;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Random;
+
+class BackpropRun{
+
+    public int epochs;
+    public int numHiddenNodes;
+    public Double mse;
+    public Double step;
+    public String equation;
+    public long duration;
+
+    public BackpropRun(int epochs, int numHiddenNodes, Double mse, Double step, String equation, long duration){
+        this.epochs = epochs;
+        this.numHiddenNodes = numHiddenNodes;
+        this.mse = mse;
+        this.step = step;
+        this.equation = equation;
+        this.duration = duration;
+    }
+
+    public String getReport(){
+        return epochs + " epochs | " +  numHiddenNodes + " hidden nodes | " + mse + " mean squared error | " + (duration / 1000) + " seconds";
+    }
+
+
+}
 
 /**
  * Created by Cameron on 10/03/2018.
@@ -12,6 +41,17 @@ public class Backpropagation {
     private Double step = 0.1;
     private Integer epochs = 700;
     private Integer numHiddenNodes = 5;
+
+    private Integer verificationSetSize = 200;
+    private Integer verficationInterval = 100;
+
+    private Boolean useMomentum = true;
+    private Double momentumValue = 0.9;
+
+    //private Boolean useBoldDriver = false;
+    //private Integer boldDriverInterval = 500;
+
+    private Boolean useAnnealing = false;
 
     /* Variables */
 
@@ -24,11 +64,13 @@ public class Backpropagation {
 
     private Integer pointer = 0;
 
-    public Backpropagation(){
+    private ArrayList<BackpropRun> runs = new ArrayList<BackpropRun>();
+
+    public Backpropagation(String inputDataFilePath){
 
         data = new Dataset();
 
-        data.importCSV("data.csv");
+        data.importCSV(inputDataFilePath);
 
         data.normalise(0.1,0.9);
 
@@ -48,6 +90,18 @@ public class Backpropagation {
 
     public void setStep(Double stepValue){
         step = stepValue;
+    }
+
+    public void setVerificationSetSize(int verificationSetSize1){
+        verificationSetSize = verificationSetSize1;
+    }
+
+    public void setMomentum(Boolean momentum){
+        useMomentum = momentum;
+    }
+
+    public void setMomentumValue(Double momentumValue1){
+        momentumValue = momentumValue1;
     }
 
 
@@ -84,20 +138,89 @@ public class Backpropagation {
         exportComputedValues();
         data.report();
 
+        long start = System.currentTimeMillis();
+        double lastReportedError = data.getMSE();
+
         for(int i = 0; i < epochs; i++){
-            for(int j = 0; j < data.getSize(); j++){
+
+            if((i % verficationInterval) == 0 && (verificationSetSize > 0)){
+                for(int k = (data.getSize() - verificationSetSize); k < data.getSize(); k++){
+                    updatePointers(k);
+                    step();
+                }
+            }
+
+            /*
+            if((i % boldDriverInterval) == 0 && useBoldDriver ){
+                exportComputedValues();
+                if(data.getMSE() > lastReportedError){
+
+                }
+            }*/
+
+            for(int j = 0; j < (data.getSize() - verificationSetSize); j++){
                 updatePointers(j);
                 step();
             }
+
+
         }
 
+        long end = System.currentTimeMillis();
+
         System.out.println("Results after " + epochs + " epochs with " + numHiddenNodes + " hidden nodes:");
-        System.out.println(this.output.getEquation());
+        String equation = this.output.getEquation();
+        System.out.println(equation);
 
         exportComputedValues();
         data.report();
 
+        long duration = end - start;
+
+        runs.add(new BackpropRun(epochs, numHiddenNodes, data.getMSE(), step, equation, duration));
+
     }
+
+    public void step(){
+
+        //Output.getValue will perform a forward pass
+        Double outputDelta = output.getError() * sigmoidPrime(output.getValue());
+
+        output.setBias(output.getBias() + (step * outputDelta * sigmoid(1.0)));
+
+        for(NodeWeighting inputL1 : output.getInputs()){
+
+            Double inputActivation = sigmoid(inputL1.node.getValue());
+
+            Double weightChange = (step * outputDelta * inputActivation);
+            inputL1.weight = inputL1.weight + weightChange;
+
+            if(useMomentum){
+                inputL1.weight = inputL1.weight + (momentumValue * inputL1.lastWeightChange);
+                inputL1.lastWeightChange = weightChange;
+            }
+
+            Double hiddenDelta = inputL1.weight * outputDelta * sigmoidPrime(inputL1.node.getValue());
+
+            inputL1.node.setBias(inputL1.node.getBias() + (step * hiddenDelta * sigmoid(1.0)));
+
+            for(NodeWeighting inputL2 : inputL1.node.getInputs()){
+
+                Double hiddenActivation = sigmoid(inputL2.node.getValue());
+
+                Double weightChange2 = (step * hiddenDelta * hiddenActivation);
+                inputL2.weight = inputL2.weight + weightChange2;
+
+                if(useMomentum){
+                    inputL2.weight = inputL2.weight + (momentumValue * inputL2.lastWeightChange);
+                    inputL2.lastWeightChange = weightChange;
+                }
+            }
+
+        }
+
+    }
+
 
     public void exportComputedValues(){
         ArrayList<Double> computed = new ArrayList<Double>();
@@ -117,30 +240,6 @@ public class Backpropagation {
 
     public Double getMSE(){
         return data.getMSE();
-    }
-
-    public void step(){
-
-        //Output.getValue will perform a forward pass
-        Double outputDelta = output.getError() * sigmoidPrime(output.getValue());
-
-        for(NodeWeighting inputL1 : output.getInputs()){
-
-            Double inputActivation = sigmoid(inputL1.node.getValue());
-
-            inputL1.weight = inputL1.weight + (step * outputDelta * inputActivation);
-
-            Double hiddenDelta = inputL1.weight * outputDelta * sigmoidPrime(inputL1.node.getValue());
-
-            for(NodeWeighting inputL2 : inputL1.node.getInputs()){
-
-                Double hiddenActivation = sigmoid(inputL2.node.getValue());
-                inputL2.weight = inputL2.weight + (step * hiddenDelta * hiddenActivation);
-
-            }
-
-        }
-
     }
 
 
@@ -175,4 +274,53 @@ public class Backpropagation {
         Double value = sigmoid(val) * (1 - sigmoid(val));
         return value;
     }
+
+    public void report(){
+
+        if(this.runs.size() < 1) return;
+
+        BackpropRun best = this.runs.get(0);
+
+        for(BackpropRun run : this.runs){
+            if(run.mse < best.mse) best = run;
+            System.out.println(run.getReport());
+        }
+
+        System.out.println("Best performing cycle:");
+        System.out.println(best.getReport());
+    }
+
+    public void saveReport(String filePath){
+
+        try{
+
+            PrintWriter pw = new PrintWriter( new File(filePath) );
+            StringBuilder sb = new StringBuilder();
+
+            sb.append("mse,epochs,hiddennodes,duration,equation");
+            sb.append('\n');
+
+            for(BackpropRun run : this.runs){
+                sb.append(run.mse.toString());
+                sb.append(',');
+                sb.append(run.epochs);
+                sb.append(',');
+                sb.append(run.numHiddenNodes);
+                sb.append(',');
+                sb.append(run.duration);
+                sb.append(',');
+                sb.append(run.equation);
+                sb.append('\n');
+            }
+
+            pw.write(sb.toString());
+            pw.close();
+            System.out.println("Wrote results of results to " + filePath);
+
+        }catch(FileNotFoundException e){
+            e.printStackTrace();
+        }
+
+    }
+
 }
