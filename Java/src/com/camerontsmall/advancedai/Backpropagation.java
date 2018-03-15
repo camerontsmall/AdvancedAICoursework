@@ -51,7 +51,11 @@ public class Backpropagation {
     //private Boolean useBoldDriver = false;
     //private Integer boldDriverInterval = 500;
 
-    private Boolean useAnnealing = false;
+    private Boolean useAnnealing = true;
+    private Double annealingP = 0.01;
+    private Double annealingQ = 0.1;
+    private int annealingR = 300;
+
 
     /* Variables */
 
@@ -146,7 +150,7 @@ public class Backpropagation {
             if((i % verficationInterval) == 0 && (verificationSetSize > 0)){
                 for(int k = (data.getSize() - verificationSetSize); k < data.getSize(); k++){
                     updatePointers(k);
-                    step();
+                    step(i);
                 }
             }
 
@@ -160,7 +164,7 @@ public class Backpropagation {
 
             for(int j = 0; j < (data.getSize() - verificationSetSize); j++){
                 updatePointers(j);
-                step();
+                step(i);
             }
 
 
@@ -181,7 +185,7 @@ public class Backpropagation {
 
     }
 
-    public void step(){
+    public void step(int currentEpoch){
 
         //Output.getValue will perform a forward pass
         Double outputDelta = output.getError() * sigmoidPrime(output.getValue());
