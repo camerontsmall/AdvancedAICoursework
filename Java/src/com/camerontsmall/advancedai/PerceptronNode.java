@@ -33,10 +33,12 @@ public class PerceptronNode {
         return null;
     }
 
+    public static Boolean enableTracking = true;   //set false to reduce memory usage for lots of repeats
+
     public PerceptronNode(){
         this.id = PerceptronIdCounter;
         PerceptronIdCounter++;
-        ExistingNodes.add(this);
+        if(enableTracking) ExistingNodes.add(this);
     }
 
     private ArrayList<NodeWeighting> inputs = new ArrayList<NodeWeighting>();

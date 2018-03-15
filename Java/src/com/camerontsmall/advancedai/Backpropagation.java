@@ -43,18 +43,18 @@ public class Backpropagation {
     private Integer numHiddenNodes = 5;
 
     private Integer verificationSetSize = 200;
-    private Integer verficationInterval = 100;
+    private Integer verificationInterval = 100;
 
-    private Boolean useMomentum = true;
+    private Boolean useMomentum = false;
     private Double momentumValue = 0.9;
 
     //private Boolean useBoldDriver = false;
     //private Integer boldDriverInterval = 500;
 
-    private Boolean useAnnealing = true;
+    private Boolean useAnnealing = false;
     private Double annealingP = 0.01;
     private Double annealingQ = 0.1;
-    private int annealingR = 300;
+    private int annealingR = 3000;
 
 
     /* Variables */
@@ -110,10 +110,11 @@ public class Backpropagation {
 
 
     public void setupNodes(){
-        inputs = data.getInputNodes();
-        output = data.getOutputNode();
+        inputs = data.getInputNodes();  //Generate input nodes from dataset
+        output = data.getOutputNode();  //Generate output node from dataset
 
-        hiddens.clear();
+        hiddens.clear();    //Reset the hidden nodes
+
         for(int i = 0; i < numHiddenNodes; i++){
             PerceptronNode newNode = new PerceptronNode();
             hiddens.add(newNode);
@@ -140,14 +141,14 @@ public class Backpropagation {
         System.out.println("Starting values:");
         System.out.println(this.output.getEquation());
         exportComputedValues();
-        data.report();
+        data.report();  //Print out initial MSE for comparison
 
         long start = System.currentTimeMillis();
         double lastReportedError = data.getMSE();
 
         for(int i = 0; i < epochs; i++){
 
-            if((i % verficationInterval) == 0 && (verificationSetSize > 0)){
+            if((i % verificationInterval) == 0 && (verificationSetSize > 0)){
                 for(int k = (data.getSize() - verificationSetSize); k < data.getSize(); k++){
                     updatePointers(k);
                     step(i);
@@ -187,16 +188,24 @@ public class Backpropagation {
 
     public void step(int currentEpoch){
 
+        double stepAmount;
+
+        if(useAnnealing){
+            stepAmount = annealing(currentEpoch);
+        }else{
+            stepAmount = step;
+        }
+
         //Output.getValue will perform a forward pass
         Double outputDelta = output.getError() * sigmoidPrime(output.getValue());
 
-        output.setBias(output.getBias() + (step * outputDelta * sigmoid(1.0)));
+        output.setBias(output.getBias() + (stepAmount * outputDelta * sigmoid(1.0)));
 
         for(NodeWeighting inputL1 : output.getInputs()){
 
             Double inputActivation = sigmoid(inputL1.node.getValue());
 
-            Double weightChange = (step * outputDelta * inputActivation);
+            Double weightChange = (stepAmount * outputDelta * inputActivation);
             inputL1.weight = inputL1.weight + weightChange;
 
             if(useMomentum){
@@ -206,13 +215,13 @@ public class Backpropagation {
 
             Double hiddenDelta = inputL1.weight * outputDelta * sigmoidPrime(inputL1.node.getValue());
 
-            inputL1.node.setBias(inputL1.node.getBias() + (step * hiddenDelta * sigmoid(1.0)));
+            inputL1.node.setBias(inputL1.node.getBias() + (stepAmount * hiddenDelta * sigmoid(1.0)));
 
             for(NodeWeighting inputL2 : inputL1.node.getInputs()){
 
                 Double hiddenActivation = sigmoid(inputL2.node.getValue());
 
-                Double weightChange2 = (step * hiddenDelta * hiddenActivation);
+                Double weightChange2 = (stepAmount * hiddenDelta * hiddenActivation);
                 inputL2.weight = inputL2.weight + weightChange2;
 
                 if(useMomentum){
@@ -277,6 +286,10 @@ public class Backpropagation {
     public static Double sigmoidPrime(Double val){
         Double value = sigmoid(val) * (1 - sigmoid(val));
         return value;
+    }
+
+    public double annealing(int epoch){
+        return annealingP + ((annealingQ - annealingP) * (1 - sigmoid((10 - ((20 * epoch) / (double) annealingR)))));
     }
 
     public void report(){
